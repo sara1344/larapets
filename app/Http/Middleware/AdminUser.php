@@ -20,7 +20,7 @@ class adminUser
         return $next($request);
     }
 
-    // Si no es admin, lo redirigimos al home o lanzamos un error 403
+    // Si no es admin, lo redirigimos al home o lanzamos un error 403 jkhgcghgfjh
     return redirect('/dashboard')->with('error', 'No tienes permisos de administrador.');
 }
 }
