@@ -1,0 +1,135 @@
+<?php
+
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+use Carbon\Carbon;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdoptionController;
+use App\Http\Controllers\PetController;
+use App\Http\Controllers\CustomerController;
+
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::get('/', function () {
+    return view('welcome');
+});
+Route::get('helloworld',function(){
+    return '<h1>Hellos World :) </h1>';
+});
+Route::get('sayhello/{name}',function(){
+    $say = '';
+    return '<h1>👍 Hello: ' . request()->name . '</h1>';
+});
+Route::get('getallpets',function(){
+    $pets = App\Models\Pet::take(10)->get();
+    dd($pets->toArray());
+});
+Route::get('show/pet/{id}',function(){
+    $pet = App\Models\Pet::find(request()->id);
+    dd($pet->toArray());
+});
+
+Route::get('view/allpets',function(){
+    $pets = App\Models\Pet::all() ;
+    return view('listpets')->with('pets',$pets);
+});
+
+Route::get('challenge',function(){
+    $users = App\Models\User::take(20)->get();
+    echo '<table style="border: 1px solid"> 
+            <tr style="border: 1px solid; background-color: black; color: white">
+                <td style="border: 1px solid">nombre</td>
+                <td style="border: 1px solid">Correo</td>
+                <td style="border: 1px solid">Telefono</td>
+                <td style="border: 1px solid">Edad</td>
+                <td style="border: 1px solid">Creado</td>
+                <td style="border: 1px solid">photo</td>
+            </tr>';
+    foreach ($users as $user) {
+        echo '<tr style="border: 1px solid">';
+        $name=$user->fullname;
+        $mail=$user->email;
+        $phone=$user->phone;
+        $edad = Carbon::parse($user->birthdate)->age;
+        $created=$user->created_at->diffForHumans();
+        $photo=asset("images/" . $user->photo);
+        echo '<td style="border: 1px solid; background-color: gray; color: white">'. $name .' </td>
+                <td style="border: 1px solid; background-color: gray; color: white">'. $mail .'</td>
+                <td style="border: 1px solid; background-color: gray; color: white">'. $phone .'</td>
+                <td style="border: 1px solid; background-color: gray; color: white">'. $edad .' años </td>
+                <td style="border: 1px solid; background-color: gray; color: white">' . $created . '</td>
+                <td style="border: 1px solid"><img width="50px" height="50px" src="' . $photo . '"></td>
+            </tr>';
+    }
+    echo '</table>';
+});
+
+Route::get('view/pet/{id}',function(){
+    $pet = App\Models\Pet::find(request()->id);
+    return view('showpet')->with('pet',$pet);
+});
+
+//Middleware Auth
+Route::middleware('auth')->group(function() {
+    
+    Route::middleware(['Admin'])->group(function () {
+        Route::resources([
+            'users'=> UserController::class,
+            'pets'=> PetController::class,
+            #'adoptions'=> AdoptionController::class
+        ]);
+
+        Route::get('adoptions',[AdoptionController::class,'index']);
+        Route::get('adoptions/{id}',[AdoptionController::class,'show']);
+
+        Route::get('export/users/pdf',[UserController::class,'pdf']);
+        Route::get('export/pets/pdf',[PetController::class,'pdf']);
+        Route::get('export/adoptions/pdf',[AdoptionController::class,'pdf']);
+
+
+        Route::get('export/users/excel',[UserController::class,'excel']);
+        Route::get('export/pets/excel',[PetController::class,'excel']);
+        Route::get('export/adoptions/excel',[AdoptionController::class,'excel']);
+
+        //Import Excel
+        Route::POST('import/users',[UserController::class,'import']);
+        Route::POST('import/pets',[PetController::class,'import']);
+
+        //search
+        Route::post('search/users',[UserController::class,'search']);
+        Route::post('search/pets',[PetController::class,'search']);
+        Route::post('search/adoptions',[AdoptionController::class,'search']);
+    });
+
+    //Customer
+    Route::get('myprofile/', [CustomerController::class, 'myprofile']);
+    Route::put('myprofile/{id}', [CustomerController::class, 'updatemyprofile']);
+
+    Route::get('myadoptions/', [CustomerController::class, 'myadoptions']);
+    Route::get('myadoptions/{id}', [CustomerController::class, 'showmyadoption']);
+
+    Route::get('listpets/', [CustomerController::class, 'listpets']);
+    Route::post('search/adoptionpets', [CustomerController::class, 'search']);
+    Route::post('search/listpets', [CustomerController::class, 'searchpets']);
+    Route::get('showpet/{id}', [CustomerController::class, 'showpet']);
+    Route::post('makeadoption', [CustomerController::class, 'makeadoption']);
+
+
+});
+
+//Middleware Auth
+
+
+require __DIR__.'/auth.php';
